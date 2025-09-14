@@ -77,3 +77,104 @@ FROM
     Station_With_Order 
 WHERE
     latn_order = (total_row+1)/2
+
+--5. Query for challange "Placements"
+SELECT 
+    s.Name
+FROM
+    Students s
+JOIN
+    Friends f ON s.ID = f.ID
+JOIN
+    Packages p1 ON s.ID = p1.ID
+JOIN 
+    Packages p2 ON Friend_ID = p2.ID
+WHERE 
+    p2.Salary > p1.Salary
+ORDER BY
+    p2.Salary ASC
+
+--6 Query for challange "SQL Project Planning"
+WITH Project_With_ID AS (
+    SELECT 
+        Start_Date,
+        End_Date,
+        DATE_SUB(Start_Date, INTERVAL ROW_NUMBER() OVER(ORDER BY Start_Date) DAY) AS Project_ID
+    FROM 
+        Projects
+)
+
+SELECT 
+    MIN(Start_Date),
+    MAX(End_Date)
+FROM 
+    Project_With_ID
+GROUP BY 
+    Project_ID
+ORDER BY 
+    DATEDIFF(MAX(End_Date), MIN(Start_Date)),
+    Project_ID
+
+--7 Query for challange "Print Prime Numbers"
+WITH RECURSIVE Angka(n) AS (
+    SELECT 1
+    
+    UNION ALL
+    
+    SELECT n + 1 FROM Angka WHERE n < 1000
+)
+
+SELECT 
+    GROUP_CONCAT(kolom_prima SEPARATOR '&')
+FROM (
+    SELECT 
+        a.n AS kolom_prima
+    FROM
+        Angka a
+    JOIN 
+        Angka b ON a.n % b.n = 0
+    GROUP BY 
+        a.n
+    HAVING 
+        COUNT(a.n) = 2
+    ORDER BY 
+        a.n ASC
+) AS TabelBilanganPrima
+
+--8 Query for challange "Challenges"
+WITH 
+    main_table AS (
+        SELECT 
+            h.hacker_id AS thehacker_id,
+            h.name AS hacker_name,
+            COUNT(h.hacker_id) AS total_challenges
+        FROM
+            Hackers h
+        JOIN
+            Challenges c ON h.hacker_id = c.hacker_id 
+        GROUP BY 
+            h.hacker_id, h.name
+    ),
+
+    challenge_counts AS (
+        SELECT
+            total_challenges,
+            COUNT(*) AS freq
+        FROM
+            main_table
+        GROUP BY 
+            total_challenges
+    )
+
+SELECT 
+    thehacker_id,
+    hacker_name,
+    total_challenges
+FROM 
+    main_table
+WHERE 
+    total_challenges = (SELECT MAX(total_challenges) FROM main_table) 
+OR
+    total_challenges IN (SELECT total_challenges FROM challenge_counts WHERE freq = 1) 
+ORDER BY
+    total_challenges DESC, thehacker_id ASC
